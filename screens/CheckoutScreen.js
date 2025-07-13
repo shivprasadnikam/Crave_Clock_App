@@ -1,0 +1,188 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { globalStyles, colors } from '../styles/globalStyles';
+import { useCart } from '../context/CartContext';
+import { foodAPI } from '../services/api';
+
+const CheckoutScreen = ({ navigation }) => {
+  const { cart, getCartTotal, clearCart } = useCart();
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handlePlaceOrder = async () => {
+    if (!deliveryAddress.trim() || !phoneNumber.trim()) {
+      Alert.alert('Missing Information', 'Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const orderData = {
+        items: cart,
+        deliveryAddress: deliveryAddress.trim(),
+        phoneNumber: phoneNumber.trim(),
+        specialInstructions: specialInstructions.trim(),
+        totalAmount: getCartTotal(),
+        orderDate: new Date().toISOString(),
+      };
+
+      const response = await foodAPI.createOrder(orderData);
+      
+      Alert.alert(
+        'Order Placed Successfully!',
+        `Your order #${response.data.id} has been placed. Estimated delivery: 30-45 minutes`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              clearCart();
+              navigation.navigate('Orders');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to place order. Please try again.');
+      console.error('Error placing order:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deliveryFee = 2.99;
+  const tax = getCartTotal() * 0.08;
+  const total = getCartTotal() + deliveryFee + tax;
+
+  return (
+    <ScrollView style={globalStyles.container}>
+      <View style={styles.container}>
+        <Text style={globalStyles.title}>Checkout</Text>
+        
+        <View style={styles.section}>
+          <Text style={globalStyles.subtitle}>Delivery Information</Text>
+          <TextInput
+            style={globalStyles.input}
+            placeholder="Delivery Address *"
+            value={deliveryAddress}
+            onChangeText={setDeliveryAddress}
+            multiline
+          />
+          <TextInput
+            style={globalStyles.input}
+            placeholder="Phone Number *"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={globalStyles.input}
+            placeholder="Special Instructions (optional)"
+            value={specialInstructions}
+            onChangeText={setSpecialInstructions}
+            multiline
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={globalStyles.subtitle}>Order Summary</Text>
+          {cart.map((item) => (
+            <View key={item.id} style={styles.orderItem}>
+              <Text style={styles.itemName}>{item.name} x {item.quantity}</Text>
+              <Text style={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={globalStyles.subtitle}>Payment Summary</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>Subtotal:</Text>
+            <Text style={styles.summaryText}>${getCartTotal().toFixed(2)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>Delivery Fee:</Text>
+            <Text style={styles.summaryText}>${deliveryFee.toFixed(2)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>Tax:</Text>
+            <Text style={styles.summaryText}>${tax.toFixed(2)}</Text>
+          </View>
+          <View style={[styles.summaryRow, styles.totalRow]}>
+            <Text style={styles.totalText}>Total:</Text>
+            <Text style={styles.totalText}>${total.toFixed(2)}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[globalStyles.button, loading && styles.disabledButton]}
+          onPress={handlePlaceOrder}
+          disabled={loading}
+        >
+          <Text style={globalStyles.buttonText}>
+            {loading ? 'Placing Order...' : 'Place Order'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  orderItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  itemName: {
+    fontSize: 16,
+    color: colors.black,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  summaryText: {
+    fontSize: 16,
+    color: colors.darkGray,
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: 8,
+    paddingTop: 8,
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+});
+
+export default CheckoutScreen;
