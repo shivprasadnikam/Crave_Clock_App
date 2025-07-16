@@ -1,11 +1,14 @@
 import React from 'react';
-import AppNavigator from './navigation/AppNavigator'; // Adjust path if needed
+import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import AppNavigator from './navigation/AppNavigator';
 
 export default function App() {
   return (
-    <CartProvider>
-      <AppNavigator />
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <AppNavigator />
+      </CartProvider>
+    </AuthProvider>
   );
 }

@@ -9,26 +9,7 @@ import {
 } from 'react-native';
 import { globalStyles, colors } from '../styles/globalStyles';
 import { foodAPI } from '../services/api';
-
-const OrderCard = ({ order }) => (
-  <View style={styles.orderCard}>
-    <View style={styles.orderHeader}>
-      <Text style={styles.orderId}>Order #{order.id}</Text>
-      <Text style={styles.orderDate}>
-        {new Date(order.orderDate).toLocaleDateString()}
-      </Text>
-    </View>
-    <Text style={styles.orderItems}>
-      {order.items.map(item => `${item.name} (${item.quantity})`).join(', ')}
-    </Text>
-    <View style={styles.orderFooter}>
-      <Text style={styles.orderTotal}>${order.totalAmount.toFixed(2)}</Text>
-      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-        <Text style={styles.statusText}>{order.status}</Text>
-      </View>
-    </View>
-  </View>
-);
+import { useAuth } from '../context/AuthContext';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -45,10 +26,46 @@ const getStatusColor = (status) => {
   }
 };
 
+const OrderCard = ({ order }) => (
+  <View style={styles.orderCard}>
+    <View style={styles.orderHeader}>
+      <Text style={styles.orderId}>Order #{order.orderId}</Text>
+      <Text style={styles.orderDate}>
+        {order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString()
+          : 'Date not available'}
+      </Text>
+    </View>
+
+    {/* Handle missing order items gracefully */}
+    <Text style={styles.orderItems}>
+      {Array.isArray(order.items)
+        ? order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')
+        : 'No items available'}
+    </Text>
+
+    <View style={styles.orderFooter}>
+      <Text style={styles.orderTotal}>${order.totalAmount?.toFixed(2) || '0.00'}</Text>
+      <View
+        style={[
+          styles.statusBadge,
+          { backgroundColor: getStatusColor(order.status) },
+        ]}
+      >
+        <Text style={styles.statusText}>
+          {order.status ? order.status : 'unknown'}
+        </Text>
+      </View>
+    </View>
+  </View>
+);
+
 const OrderHistoryScreen = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
+  const userId = user?.id;
 
   useEffect(() => {
     fetchOrders();
@@ -56,9 +73,10 @@ const OrderHistoryScreen = () => {
 
   const fetchOrders = async () => {
     try {
-      // In a real app, you'd pass the actual user ID
-      const response = await foodAPI.getOrderHistory(1);
+      console.log("Order History API call for user:", userId);
+      const response = await foodAPI.getOrderHistory(userId);
       setOrders(response.data);
+      console.log(response.data);
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch order history');
       console.error('Error fetching orders:', error);
@@ -73,15 +91,15 @@ const OrderHistoryScreen = () => {
     fetchOrders();
   };
 
-  const renderOrder = ({ item }) => (
-    <OrderCard order={item} />
-  );
+  const renderOrder = ({ item }) => <OrderCard order={item} />;
 
   if (orders.length === 0 && !loading) {
     return (
       <View style={[globalStyles.container, styles.emptyContainer]}>
         <Text style={styles.emptyText}>No orders yet</Text>
-        <Text style={styles.emptySubtext}>Your order history will appear here</Text>
+        <Text style={styles.emptySubtext}>
+          Your order history will appear here
+        </Text>
       </View>
     );
   }
@@ -92,7 +110,7 @@ const OrderHistoryScreen = () => {
       <FlatList
         data={orders}
         renderItem={renderOrder}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.orderId.toString()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

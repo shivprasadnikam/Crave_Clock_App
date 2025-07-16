@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { globalStyles, colors } from '../styles/globalStyles';
+import { useAuth } from '../context/AuthContext'; 
 
 const ProfileScreen = () => {
   const [name, setName] = useState('John Doe');
@@ -16,26 +17,28 @@ const ProfileScreen = () => {
   const [phone, setPhone] = useState('+1 234 567 8900');
   const [address, setAddress] = useState('123 Main St, City, State 12345');
 
+  const { logout } = useAuth(); // ✅ get logout from context
+
   const handleUpdateProfile = () => {
     Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: () => console.log('Logout') },
-      ]
-    );
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: logout, // ✅ logout context handles state + AsyncStorage
+      },
+    ]);
   };
 
   return (
     <ScrollView style={globalStyles.container}>
       <View style={styles.container}>
         <Text style={globalStyles.title}>Profile</Text>
-        
+
         <View style={styles.section}>
           <Text style={globalStyles.subtitle}>Personal Information</Text>
           <TextInput
@@ -87,8 +90,8 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
-          style={[globalStyles.button, styles.logoutButton]} 
+        <TouchableOpacity
+          style={[globalStyles.button, styles.logoutButton]}
           onPress={handleLogout}
         >
           <Text style={globalStyles.buttonText}>Logout</Text>

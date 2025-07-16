@@ -11,6 +11,7 @@ import {
 import { globalStyles, colors } from '../styles/globalStyles';
 import { useCart } from '../context/CartContext';
 import { foodAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const CheckoutScreen = ({ navigation }) => {
   const { cart, getCartTotal, clearCart } = useCart();
@@ -18,6 +19,8 @@ const CheckoutScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const userId = user?.id; 
 
   const handlePlaceOrder = async () => {
     if (!deliveryAddress.trim() || !phoneNumber.trim()) {
@@ -34,19 +37,26 @@ const CheckoutScreen = ({ navigation }) => {
         specialInstructions: specialInstructions.trim(),
         totalAmount: getCartTotal(),
         orderDate: new Date().toISOString(),
+        userId : userId
       };
-
+      console.log("UserId ",userId)
+      console.log("Create Order Request :: ",orderData)
       const response = await foodAPI.createOrder(orderData);
+      console.log("✅ Order Placed:", response.data);
       
+      const orderId=response.data.orderId;
       Alert.alert(
+
         'Order Placed Successfully!',
-        `Your order #${response.data.id} has been placed. Estimated delivery: 30-45 minutes`,
+        `Your order #${orderId} has been placed. Estimated delivery: 30-45 minutes`,
         [
           {
             text: 'OK',
             onPress: () => {
               clearCart();
-              navigation.navigate('Orders');
+              navigation.navigate('OrdersTab', {
+              screen: 'OrderHistory',
+});
             },
           },
         ]

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../styles/globalStyles';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext'; // ✅ Use Auth Context
 
 // Auth Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -22,7 +22,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Auth Stack Navigator
 const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Login" component={LoginScreen} />
@@ -30,14 +29,9 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-// Home Stack Navigator
 const HomeStack = () => (
   <Stack.Navigator>
-    <Stack.Screen
-      name="Home"
-      component={HomeScreen}
-      options={{ title: 'Food Delivery' }}
-    />
+    <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Food Delivery' }} />
     <Stack.Screen
       name="RestaurantDetail"
       component={RestaurantDetailScreen}
@@ -46,45 +40,25 @@ const HomeStack = () => (
   </Stack.Navigator>
 );
 
-// Cart Stack Navigator
 const CartStack = () => (
   <Stack.Navigator>
-    <Stack.Screen
-      name="Cart"
-      component={CartScreen}
-      options={{ title: 'Cart' }}
-    />
-    <Stack.Screen
-      name="Checkout"
-      component={CheckoutScreen}
-      options={{ title: 'Checkout' }}
-    />
+    <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'Cart' }} />
+    <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Checkout' }} />
   </Stack.Navigator>
 );
 
-// Order Stack Navigator
 const OrderStack = () => (
   <Stack.Navigator>
-    <Stack.Screen
-      name="OrderHistory"
-      component={OrderHistoryScreen}
-      options={{ title: 'Order History' }}
-    />
+    <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} options={{ title: 'Order History' }} />
   </Stack.Navigator>
 );
 
-// Profile Stack Navigator
 const ProfileStack = () => (
   <Stack.Navigator>
-    <Stack.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{ title: 'Profile' }}
-    />
+    <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
   </Stack.Navigator>
 );
 
-// Tab Navigator for authenticated users
 const TabNavigator = () => {
   const { getCartItemCount } = useCart();
   const cartItemCount = getCartItemCount();
@@ -134,31 +108,10 @@ const TabNavigator = () => {
   );
 };
 
-// Main App Navigator
 const AppNavigator = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoggedIn, isLoading } = useAuth(); // ✅ Use global auth state
 
-  // Check if user is logged in on app start
-  useEffect(() => {
-    checkLoginStatus();
-  }, []);
-
-  const checkLoginStatus = async () => {
-    try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      setIsLoggedIn(!!userToken);
-    } catch (error) {
-      console.error('Error checking login status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    // You can show a splash screen here
-    return null;
-  }
+  if (isLoading) return null; // or SplashScreen
 
   return (
     <NavigationContainer>

@@ -13,28 +13,25 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../styles/globalStyles';
-import { foodAPI } from '../services/api'; // ✅ Correct path
+import { foodAPI } from '../services/api'; 
+import { useAuth } from '../context/AuthContext';
+
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const { login } = useAuth();
   // const validateEmail = (email) => {
   //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   //   return emailRegex.test(email);
   // };
 
   const handleLogin = async () => {
-    // if (!email.trim()) {
-    //   Alert.alert('Error', 'Please enter your email address');
-    //   return;
-    // }
-
-    // if (!validateEmail(email)) {
-    //   Alert.alert('Error', 'Please enter a valid email address');
-    //   return;
-    // }
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your username/email');
+      return;
+    }
 
     // if (!password.trim()) {
     //   Alert.alert('Error', 'Please enter your password');
@@ -49,36 +46,78 @@ const LoginScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      console.log("Calling Login Apis")
-      const response = await foodAPI.login(email, password);
-      const { token, user } = response.data;
-      console.log(response.token)
-      // Store token and user info
-      await AsyncStorage.setItem('userToken', token);
-      await AsyncStorage.setItem('userInfo', JSON.stringify(email));
+      console.log("Calling Login API");
+      // Use your loginUser function instead of foodAPI.login
+      const response = await foodAPI.loginUser(email, password);
+      const data = response.data;
+      console.log('Login response:', response.data);
+      
+      if (data.status) {
+        // Store token and user info in AsyncStorage
+    await AsyncStorage.setItem('userId', data.userId);
+    await AsyncStorage.setItem('userInfo', JSON.stringify({
+      userName: email,
+      loginTime: new Date().toISOString()
+    }));
 
-      console.log('Login successful:', email);
-      navigation.navigate('HomeScreen');
+    console.log('Login successful:', data);
+        
+        // Since your API doesn't return userId, we'll use the username as identifier
+        // You might want to modify your API to return userId for better user management
+        await AsyncStorage.setItem('userId', data.userId);
 
+        console.log('Login successful for user:', email);
+        
+        // Navigate to HomeScreen with userId (using email as identifier)
+        login(data.userId, email);
+
+
+      } else {
+        // Handle login failure
+        Alert.alert('Login Failed', response.message || 'Invalid credentials');
+      }
 
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Login Failed', 'Invalid email or password.');
+      Alert.alert('Login Failed', 'Network error or server unavailable');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
+    if (!email.trim()) {
+      Alert.alert('Forgot Password', 'Please enter your username/email first.');
+      return;
+    }
+
     Alert.alert(
       'Forgot Password',
-      'Password reset functionality would be implemented here.',
-      [{ text: 'OK' }]
+      `Password reset instructions will be sent to ${email}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Send Reset Instructions', 
+          onPress: () => {
+            // Implement password reset API call here
+            console.log('Password reset requested for:', email);
+          }
+        }
+      ]
     );
   };
 
   const handleSignUp = () => {
     navigation.navigate('SignUp');
+  };
+
+  const handleGoogleLogin = async () => {
+    // Implement Google login functionality
+    Alert.alert(
+      'Google Login',
+      'Google authentication would be implemented here.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -92,18 +131,17 @@ const LoginScreen = ({ navigation }) => {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Sign in to continue ordering</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Username/Email</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
+              style={[styles.input, !email.trim() && styles.inputError]}
+              placeholder="Enter your username or email"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
@@ -112,7 +150,7 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, !password.trim() && styles.inputError]}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Enter your password"
@@ -126,6 +164,7 @@ const LoginScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.showPasswordButton}
                 onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 <Text style={styles.showPasswordText}>
                   {showPassword ? 'Hide' : 'Show'}
@@ -137,6 +176,7 @@ const LoginScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.forgotPasswordButton}
             onPress={handleForgotPassword}
+            disabled={isLoading}
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
@@ -147,7 +187,10 @@ const LoginScreen = ({ navigation }) => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.loadingText}>Signing in...</Text>
+              </View>
             ) : (
               <Text style={styles.loginButtonText}>Sign In</Text>
             )}
@@ -159,13 +202,17 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity style={styles.googleButton}>
+          <TouchableOpacity 
+            style={styles.googleButton}
+            onPress={handleGoogleLogin}
+            disabled={isLoading}
+          >
             <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
+            <TouchableOpacity onPress={handleSignUp} disabled={isLoading}>
               <Text style={styles.signupLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -203,6 +250,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#f8f9fa',
   },
+  inputError: {
+    borderColor: '#FF6B6B',
+  },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -239,6 +289,15 @@ const styles = StyleSheet.create({
   },
   disabledButton: { opacity: 0.6 },
   loginButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 8,
+  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',

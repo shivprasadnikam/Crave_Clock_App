@@ -2,34 +2,93 @@ import React from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   Image,
   TouchableOpacity,
-  StyleSheet,
 } from 'react-native';
 import { colors } from '../styles/globalStyles';
-import { useCart } from '../context/CartContext';
 
-const FoodCard = ({ food }) => {
-  const { addToCart } = useCart();
-
+const FoodCard = ({ 
+  food, 
+  onAddToCart, 
+  onUpdateQuantity, 
+  quantityInCart = 0, 
+  loading = false 
+}) => {
   const handleAddToCart = () => {
-    addToCart(food);
+    if (onAddToCart) {
+      onAddToCart(food, 1);
+    }
+  };
+
+  const handleIncrement = () => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(food, quantityInCart + 1);
+    }
+  };
+
+  const handleDecrement = () => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(food, quantityInCart - 1);
+    }
   };
 
   return (
     <View style={styles.card}>
       <Image
-        source={{ uri: food.image || 'https://via.placeholder.com/150x150' }}
+        source={{ uri: food.image || 'https://via.placeholder.com/80x80' }}
         style={styles.image}
       />
       <View style={styles.content}>
-        <Text style={styles.name}>{food.name}</Text>
-        <Text style={styles.description}>{food.description}</Text>
+        <View style={styles.header}>
+          <Text style={styles.name} numberOfLines={1}>
+            {food.itemName}
+          </Text>
+          {food.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{food.category}</Text>
+            </View>
+          )}
+        </View>
+        
+        <Text style={styles.description} numberOfLines={2}>
+          {food.description || 'Delicious food item'}
+        </Text>
+        
         <View style={styles.footer}>
           <Text style={styles.price}>₹{food.price}</Text>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddToCart}>
-            <Text style={styles.addButtonText}>Add +</Text>
-          </TouchableOpacity>
+          
+          {quantityInCart > 0 ? (
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                style={[styles.quantityButton, loading && styles.disabledButton]}
+                onPress={handleDecrement}
+                disabled={loading}
+              >
+                <Text style={styles.quantityButtonText}>-</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.quantityText}>{quantityInCart}</Text>
+              
+              <TouchableOpacity
+                style={[styles.quantityButton, loading && styles.disabledButton]}
+                onPress={handleIncrement}
+                disabled={loading}
+              >
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.addButton, loading && styles.disabledButton]}
+              onPress={handleAddToCart}
+              disabled={loading}
+            >
+              <Text style={styles.addButtonText}>
+                {loading ? 'Adding...' : 'Add'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -38,38 +97,56 @@ const FoodCard = ({ food }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: '#fff',
     borderRadius: 12,
+    padding: 16,
     marginHorizontal: 16,
-    marginVertical: 8,
-    shadowColor: colors.black,
+    marginBottom: 12,
+    flexDirection: 'row',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    flexDirection: 'row',
   },
   image: {
-    width: 100,
-    height: 100,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 12,
   },
   content: {
     flex: 1,
-    padding: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
   },
   name: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: colors.black,
-    marginBottom: 4,
+    color: '#333',
+    flex: 1,
+  },
+  categoryBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  categoryText: {
+    fontSize: 10,
+    color: '#1976D2',
+    fontWeight: '600',
   },
   description: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.gray,
     marginBottom: 8,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   footer: {
     flexDirection: 'row',
@@ -77,20 +154,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary,
   },
   addButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   addButtonText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 4,
+  },
+  quantityButton: {
+    backgroundColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginHorizontal: 12,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });
 
