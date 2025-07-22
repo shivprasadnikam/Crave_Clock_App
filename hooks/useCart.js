@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { foodAPI } from '../services/api';
 
-export const useCart = (userId, vendorId) => {
+export const useCart = (userId) => {
   const [cart, setCart] = useState([]);
   const [cartLoading, setCartLoading] = useState(false);
 
@@ -15,22 +15,18 @@ export const useCart = (userId, vendorId) => {
     
     try {
       setCartLoading(true);
+      console.log('Attempting to fetch cart for userId:', userId);
       const response = await foodAPI.getCartByUserId(userId);
-      console.log("Cart data from backend:", response.data);
+      console.log('Cart API response: Data', response.data);
+      console.log('Cart data from backend:', response.data);
       
-      // Filter cart items for current restaurant only
-      const restaurantCartItems = response.data.filter(
-        item => item.vendorId === vendorId
-      );
-      
-      console.log("Filtered cart items for restaurant:", restaurantCartItems);
-      setCart(restaurantCartItems);
+      setCart(response.data);
     } catch (err) {
-      console.error('Error fetching cart:', err);
+      console.error('Cart fetch error:', err);
     } finally {
       setCartLoading(false);
     }
-  }, [userId, vendorId]);
+  }, [userId]);
 
   const addToCart = async (item, quantity = 1) => {
     if (!userId) {
@@ -41,12 +37,9 @@ export const useCart = (userId, vendorId) => {
     try {
       setCartLoading(true);
       
-      // Ensure item has vendorId
-      const itemVendorId = item.vendorId || vendorId;
-      
       // Check if item exists in cart
       const existingItem = cart.find(
-        (i) => i.menuId === item.menuId && i.vendorId === itemVendorId
+        (i) => i.menuId === item.menuId
       );
 
       if (existingItem) {
@@ -57,7 +50,7 @@ export const useCart = (userId, vendorId) => {
         // Add new item
         const cartData = {
           userId,
-          vendorId: itemVendorId,
+          vendorId: item.vendorId,
           menuId: item.menuId,
           quantity,
           price: item.price,
@@ -83,9 +76,8 @@ export const useCart = (userId, vendorId) => {
     try {
       setCartLoading(true);
       
-      const itemVendorId = item.vendorId || vendorId;
       const cartItem = cart.find(
-        (i) => i.menuId === item.menuId && i.vendorId === itemVendorId
+        (i) => i.menuId === item.menuId
       );
 
       if (cartItem) {
@@ -118,9 +110,8 @@ export const useCart = (userId, vendorId) => {
 
   const getItemQuantityInCart = (item) => {
     console.log("getItemQuantity")
-    const itemVendorId = item.vendorId || vendorId;
     const cartItem = cart.find(
-      (i) => i.menuId === item.menuId && i.vendorId === itemVendorId
+      (i) => i.menuId === item.menuId
     );
     return cartItem ? cartItem.quantity : 0;
   };
@@ -133,8 +124,19 @@ export const useCart = (userId, vendorId) => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const clearCart = () => {
-    setCart([]);
+  const clearCart = async () => {
+    if (!userId) return;
+
+    try {
+      setCartLoading(true);
+      await foodAPI.clearCart(userId);
+      setCart([]);
+    } catch (err) {
+      console.error('Error clearing cart:', err);
+      Alert.alert('Error', 'Failed to clear cart');
+    } finally {
+      setCartLoading(false);
+    }
   };
 
   return {

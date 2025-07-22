@@ -7,13 +7,24 @@ import {
   StyleSheet,
 } from 'react-native';
 import { colors } from '../styles/globalStyles';
-import { useCart } from '../context/CartContext';
 
-const FoodCard = ({ food }) => {
-  const { addToCart } = useCart();
-
+const FoodCard = ({ food, onAddToCart, onUpdateQuantity, quantityInCart = 0, loading = false }) => {
   const handleAddToCart = () => {
-    addToCart(food);
+    if (onAddToCart) {
+      onAddToCart(food, 1);
+    }
+  };
+
+  const handleIncrement = () => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(food, quantityInCart + 1);
+    }
+  };
+
+  const handleDecrement = () => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(food, quantityInCart - 1);
+    }
   };
 
   return (
@@ -23,13 +34,37 @@ const FoodCard = ({ food }) => {
         style={styles.image}
       />
       <View style={styles.content}>
-        <Text style={styles.name}>{food.name}</Text>
+        <Text style={styles.name}>{food.itemName}</Text>
         <Text style={styles.description}>{food.description}</Text>
         <View style={styles.footer}>
-          <Text style={styles.price}>${food.price}</Text>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddToCart}>
-            <Text style={styles.addButtonText}>Add +</Text>
-          </TouchableOpacity>
+          <Text style={styles.price}>₹{food.price}</Text>
+          {quantityInCart > 0 ? (
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                style={[styles.quantityButton, loading && styles.disabledButton]}
+                onPress={handleDecrement}
+                disabled={loading}
+              >
+                <Text style={styles.quantityButtonText}>-</Text>
+              </TouchableOpacity>
+              <Text style={styles.quantityText}>{quantityInCart}</Text>
+              <TouchableOpacity
+                style={[styles.quantityButton, loading && styles.disabledButton]}
+                onPress={handleIncrement}
+                disabled={loading}
+              >
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.addButton, loading && styles.disabledButton]}
+              onPress={handleAddToCart}
+              disabled={loading}
+            >
+              <Text style={styles.addButtonText}>{loading ? 'Adding...' : 'Add'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -91,6 +126,31 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: '600',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.lightGray,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+  },
+  quantityButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.black,
+    marginHorizontal: 8,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
 });
 

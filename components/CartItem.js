@@ -7,21 +7,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import { colors } from '../styles/globalStyles';
-import { useCart } from '../context/CartContext';
 
-const CartItem = ({ item }) => {
-  const { updateQuantity, removeFromCart } = useCart();
-
+const CartItem = ({ item, updateCartItem, incrementItem, decrementItem, cartLoading }) => {
   const handleIncrease = () => {
-    updateQuantity(item.id, item.quantity + 1);
+    incrementItem(item);
   };
 
   const handleDecrease = () => {
-    if (item.quantity > 1) {
-      updateQuantity(item.id, item.quantity - 1);
-    } else {
-      removeFromCart(item.id);
-    }
+    decrementItem(item);
   };
 
   return (
@@ -31,23 +24,21 @@ const CartItem = ({ item }) => {
         style={styles.image}
       />
       <View style={styles.content}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>${item.price}</Text>
+        <Text style={styles.name}>{item.itemName}</Text>
+        <Text style={styles.price}>₹{item.price}</Text>
         <View style={styles.quantityContainer}>
-          <TouchableOpacity style={styles.quantityButton} onPress={handleDecrease}>
+          <TouchableOpacity style={styles.quantityButton} onPress={handleDecrease} disabled={cartLoading}>
             <Text style={styles.quantityButtonText}>-</Text>
           </TouchableOpacity>
           <Text style={styles.quantity}>{item.quantity}</Text>
-          <TouchableOpacity style={styles.quantityButton} onPress={handleIncrease}>
+          <TouchableOpacity style={styles.quantityButton} onPress={handleIncrease} disabled={cartLoading}>
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.rightContent}>
-        <Text style={styles.totalPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
-        <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-          <Text style={styles.removeText}>Remove</Text>
-        </TouchableOpacity>
+        <Text style={styles.totalPrice}>₹{(item.price * item.quantity).toFixed(2)}</Text>
+        {/* Optionally add a remove button if needed */}
       </View>
     </View>
   );

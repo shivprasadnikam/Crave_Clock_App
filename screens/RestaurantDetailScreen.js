@@ -78,12 +78,15 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
   };
 
   const handleViewCart = () => {
-    navigation.navigate('Cart', { 
-      cart: cart, 
-      restaurant: restaurant,
-      totalAmount: getTotalAmount(),
-      totalItems: getTotalItems(),
-      userId: userId
+    navigation.navigate('CartTab', {
+      screen: 'CartScreen',
+      params: {
+        cart: cart,
+        restaurant: restaurant,
+        totalAmount: getTotalAmount(),
+        totalItems: getTotalItems(),
+        userId: userId
+      }
     });
   };
 

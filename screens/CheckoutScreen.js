@@ -9,25 +9,31 @@ import {
   ScrollView,
 } from 'react-native';
 import { globalStyles, colors } from '../styles/globalStyles';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../hooks/useCart';
 import { foodAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const CheckoutScreen = ({ navigation }) => {
-  const { cart, getCartTotal, clearCart } = useCart();
+const CheckoutScreen = ({ navigation, route }) => {
+  const { user } = useAuth();
+  const userId = route?.params?.userId || user?.id;
+  const { cart, getTotalAmount, clearCart } = useCart(userId);
+  console.log('CheckoutScreen rendered');
+  console.log('CheckoutScreen cart:', cart);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
-  const userId = user?.id; 
 
   const handlePlaceOrder = async () => {
     if (!deliveryAddress.trim() || !phoneNumber.trim()) {
       Alert.alert('Missing Information', 'Please fill in all required fields');
       return;
     }
-
+    if (!cart || cart.length === 0) {
+      console.log("Checkout Screen Cart Size :: ",cart.length)
+      Alert.alert('Empty Cart', 'Your cart is empty.');
+      return;
+    }
     setLoading(true);
     try {
       const orderData = {
@@ -35,18 +41,16 @@ const CheckoutScreen = ({ navigation }) => {
         deliveryAddress: deliveryAddress.trim(),
         phoneNumber: phoneNumber.trim(),
         specialInstructions: specialInstructions.trim(),
-        totalAmount: getCartTotal(),
+        totalAmount: getTotalAmount(),
         orderDate: new Date().toISOString(),
-        userId : userId
+        userId: userId
       };
-      console.log("UserId ",userId)
-      console.log("Create Order Request :: ",orderData)
+      console.log('UserId', userId);
+      console.log('Create Order Request ::', orderData);
       const response = await foodAPI.createOrder(orderData);
-      console.log("✅ Order Placed:", response.data);
-      
-      const orderId=response.data.orderId;
+      console.log('✅ Order Placed:', response.data);
+      const orderId = response.data.orderId;
       Alert.alert(
-
         'Order Placed Successfully!',
         `Your order #${orderId} has been placed. Estimated delivery: 30-45 minutes`,
         [
@@ -55,8 +59,8 @@ const CheckoutScreen = ({ navigation }) => {
             onPress: () => {
               clearCart();
               navigation.navigate('OrdersTab', {
-              screen: 'OrderHistory',
-});
+                screen: 'OrderHistory',
+              });
             },
           },
         ]
@@ -70,14 +74,18 @@ const CheckoutScreen = ({ navigation }) => {
   };
 
   const deliveryFee = 2.99;
-  const tax = getCartTotal() * 0.08;
-  const total = getCartTotal() + deliveryFee + tax;
+  const tax = getTotalAmount() * 0.08;
+  const total = getTotalAmount() + deliveryFee + tax;
+
+  if (!cart || cart.length === 0) {
+    return <Text>Your cart is empty</Text>;
+  }
 
   return (
     <ScrollView style={globalStyles.container}>
       <View style={styles.container}>
         <Text style={globalStyles.title}>Checkout</Text>
-        
+
         <View style={styles.section}>
           <Text style={globalStyles.subtitle}>Delivery Information</Text>
           <TextInput
@@ -106,9 +114,9 @@ const CheckoutScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={globalStyles.subtitle}>Order Summary</Text>
           {cart.map((item) => (
-            <View key={item.id} style={styles.orderItem}>
-              <Text style={styles.itemName}>{item.name} x {item.quantity}</Text>
-              <Text style={styles.itemPrice}>₹{(item.price * item.quantity).toFixed(2)}</Text>
+            <View key={item.cartItemId}>
+              <Text>{item.itemName} x {item.quantity}</Text>
+              <Text>₹{(item.price * item.quantity).toFixed(2)}</Text>
             </View>
           ))}
         </View>
@@ -117,19 +125,19 @@ const CheckoutScreen = ({ navigation }) => {
           <Text style={globalStyles.subtitle}>Payment Summary</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Subtotal:</Text>
-            <Text style={styles.summaryText}>${getCartTotal().toFixed(2)}</Text>
+            <Text style={styles.summaryText}>₹{getTotalAmount().toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Delivery Fee:</Text>
-            <Text style={styles.summaryText}>${deliveryFee.toFixed(2)}</Text>
+            <Text style={styles.summaryText}>₹{deliveryFee.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Tax:</Text>
-            <Text style={styles.summaryText}>${tax.toFixed(2)}</Text>
+            <Text style={styles.summaryText}>₹{tax.toFixed(2)}</Text>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalText}>Total:</Text>
-            <Text style={styles.totalText}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalText}>₹{total.toFixed(2)}</Text>
           </View>
         </View>
 
