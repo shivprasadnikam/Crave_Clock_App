@@ -50,10 +50,7 @@ const CartScreen = ({ navigation, route }) => {
     }
     console.log('CartScreen handleCheckout userId:', userId);
     console.log('CartScreen handleCheckout cart:', cart);
-    navigation.navigate('CartTab', {
-      screen: 'Checkout',
-      params: { userId }
-    });
+    navigation.navigate('Checkout', { userId });
   };
 
   const handleClearCart = () => {
@@ -89,7 +86,9 @@ const CartScreen = ({ navigation, route }) => {
         <Text style={styles.emptyText}>Your cart is empty</Text>
         <TouchableOpacity
           style={globalStyles.button}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() =>  navigation.navigate('Home', {
+                screen: 'Home',
+              })}
         >
           <Text style={globalStyles.buttonText}>Browse Restaurants</Text>
         </TouchableOpacity>

@@ -13,6 +13,7 @@ import {
 import { globalStyles } from '../styles/globalStyles';
 import { foodAPI } from '../services/api';
 import { useCart } from '../hooks/useCart.js';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,8 +38,13 @@ const MenuScreen = ({ route, navigation }) => {
     getTotalItems
   } = useCart(userId, restaurant.vendorId);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartData();
+    }, [fetchCartData])
+  );
+
   useEffect(() => {
-    console.log("On MenuScreen - Restaurant:", restaurant.vendorId, "User:", userId);
     initializeScreen();
   }, []);
 
@@ -59,7 +65,6 @@ const MenuScreen = ({ route, navigation }) => {
       setError(null);
 
       const response = await foodAPI.getMenuByRestaurant(restaurant.vendorId);
-      console.log("Menu Response ::", response.data);
 
       // Validate response data
       if (!response.data || !Array.isArray(response.data)) {
@@ -118,7 +123,6 @@ const MenuScreen = ({ route, navigation }) => {
       return;
     }
     
-    console.log("Menu Screen Add to cart", item.itemName);
     try {
       await addToCart(item, 1);
     } catch (error) {
@@ -128,7 +132,6 @@ const MenuScreen = ({ route, navigation }) => {
   };
 
   const handleIncrement = async (item) => {
-    console.log("handleIncrement called for item:", item.menuId);
     try {
       await incrementItem(item);
     } catch (error) {
@@ -138,7 +141,6 @@ const MenuScreen = ({ route, navigation }) => {
   };
 
   const handleDecrement = async (item) => {
-    console.log("handleDecrement called for item:", item.menuId);
     try {
       await decrementItem(item);
     } catch (error) {
@@ -154,14 +156,8 @@ const MenuScreen = ({ route, navigation }) => {
     }
 
     navigation.navigate('CartTab', {
-      screen: 'CartScreen',
-      params: {
-        cart: cart,
-        restaurant: restaurant,
-        totalAmount: getTotalAmount(),
-        totalItems: getTotalItems(),
-        userId: userId
-      }
+      screen: 'Cart',
+      params: { userId }
     });
   };
 

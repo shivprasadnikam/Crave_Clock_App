@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,20 +7,46 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { globalStyles, colors } from '../styles/globalStyles';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
+import { foodAPI } from '../services/api';
 
 const ProfileScreen = () => {
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [phone, setPhone] = useState('+1 234 567 8900');
-  const [address, setAddress] = useState('123 Main St, City, State 12345');
+  const { user, logout } = useAuth();
+  const userId = user?.id;
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
-  const { logout } = useAuth(); // ✅ get logout from context
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId) return;
+      setLoading(true);
+      try {
+        const res = await foodAPI.getUserProfile(userId);
+        setProfile(res.data);
+      } catch (err) {
+        Alert.alert('Error', 'Failed to fetch profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [userId]);
 
-  const handleUpdateProfile = () => {
-    Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
+  const handleUpdateProfile = async () => {
+    if (!profile) return;
+    setUpdating(true);
+    try {
+      await foodAPI.updateUserProfile(userId, profile);
+      Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to update profile');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleLogout = () => {
@@ -29,10 +55,27 @@ const ProfileScreen = () => {
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: logout, // ✅ logout context handles state + AsyncStorage
+        onPress: logout,
       },
     ]);
   };
+
+  if (loading) {
+    return (
+      <View style={[globalStyles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text>Loading profile...</Text>
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View style={[globalStyles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Profile not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={globalStyles.container}>
@@ -44,34 +87,34 @@ const ProfileScreen = () => {
           <TextInput
             style={globalStyles.input}
             placeholder="Full Name"
-            value={name}
-            onChangeText={setName}
+            value={profile.name || ''}
+            onChangeText={name => setProfile({ ...profile, name })}
           />
           <TextInput
             style={globalStyles.input}
             placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
+            value={profile.email || ''}
+            editable={false}
             keyboardType="email-address"
           />
           <TextInput
             style={globalStyles.input}
             placeholder="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
+            value={profile.phone || ''}
+            onChangeText={phone => setProfile({ ...profile, phone })}
             keyboardType="phone-pad"
           />
           <TextInput
             style={globalStyles.input}
             placeholder="Address"
-            value={address}
-            onChangeText={setAddress}
+            value={profile.address || ''}
+            onChangeText={address => setProfile({ ...profile, address })}
             multiline
           />
         </View>
 
-        <TouchableOpacity style={globalStyles.button} onPress={handleUpdateProfile}>
-          <Text style={globalStyles.buttonText}>Update Profile</Text>
+        <TouchableOpacity style={globalStyles.button} onPress={handleUpdateProfile} disabled={updating}>
+          <Text style={globalStyles.buttonText}>{updating ? 'Updating...' : 'Update Profile'}</Text>
         </TouchableOpacity>
 
         <View style={styles.section}>

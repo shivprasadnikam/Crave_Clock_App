@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect } from 'react';
 
-const BASE_URL = 'http://192.168.1.4:8082';
+const BASE_URL = 'http://192.168.1.3:8082';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -122,6 +122,17 @@ export const foodAPI = {
   syncCart: (userId, cartItems) => {
     console.log('[foodAPI] syncCart userId:', userId, 'cartItems:', cartItems);
     return api.post(`/api/cart/sync/${userId}`, { items: cartItems });
+  },
+
+  // 👤 User Profile
+  getUserProfile: (userId) => {
+    console.log('[foodAPI] getUserProfile userId:', userId);
+    return api.get(`/api/profile/${userId}`);
+  },
+  // 👤 Update User Profile
+  updateUserProfile: (userId, profileData) => {
+    console.log('[foodAPI] updateUserProfile userId:', userId, 'profileData:', profileData);
+    return api.put(`/api/profile/${userId}`, profileData);
   },
 };
 

@@ -1,7 +1,9 @@
 // hooks/useCart.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { foodAPI } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+
 
 export const useCart = (userId) => {
   const [cart, setCart] = useState([]);
@@ -9,45 +11,34 @@ export const useCart = (userId) => {
 
   const fetchCartData = useCallback(async () => {
     if (!userId) {
-      console.log("No userId provided, skipping cart fetch");
       return;
     }
-    
+    setCartLoading(true);
     try {
-      setCartLoading(true);
-      console.log('Attempting to fetch cart for userId:', userId);
       const response = await foodAPI.getCartByUserId(userId);
-      console.log('Cart API response: Data', response.data);
-      console.log('Cart data from backend:', response.data);
-      
       setCart(response.data);
     } catch (err) {
-      console.error('Cart fetch error:', err);
+      setCart([]);
     } finally {
       setCartLoading(false);
     }
   }, [userId]);
+
+  useEffect(() => {
+    fetchCartData();
+  }, [fetchCartData]);
 
   const addToCart = async (item, quantity = 1) => {
     if (!userId) {
       Alert.alert('Error', 'Please log in to add items to cart');
       return;
     }
-
     try {
       setCartLoading(true);
-      
-      // Check if item exists in cart
-      const existingItem = cart.find(
-        (i) => i.menuId === item.menuId
-      );
-
+      const existingItem = cart.find((i) => i.menuId === item.menuId);
       if (existingItem) {
-        // Update existing item
         await foodAPI.updateCartItem(userId, existingItem.cartItemId, existingItem.quantity + quantity);
-        console.log("Updated existing cart item:", existingItem.cartItemId);
       } else {
-        // Add new item
         const cartData = {
           userId,
           vendorId: item.vendorId,
@@ -56,14 +47,10 @@ export const useCart = (userId) => {
           price: item.price,
           itemName: item.itemName
         };
-        console.log("Adding new cart item:", cartData);
         await foodAPI.addToCart(cartData);
       }
-
-      // Refresh cart data
       await fetchCartData();
     } catch (err) {
-      console.error('Error adding to cart:', err);
       Alert.alert('Error', 'Failed to add item to cart');
     } finally {
       setCartLoading(false);
@@ -72,14 +59,9 @@ export const useCart = (userId) => {
 
   const updateCartItem = async (item, newQuantity) => {
     if (!userId) return;
-
     try {
       setCartLoading(true);
-      
-      const cartItem = cart.find(
-        (i) => i.menuId === item.menuId
-      );
-
+      const cartItem = cart.find((i) => i.menuId === item.menuId);
       if (cartItem) {
         if (newQuantity > 0) {
           await foodAPI.updateCartItem(userId, cartItem.cartItemId, newQuantity);
@@ -87,11 +69,8 @@ export const useCart = (userId) => {
           await foodAPI.removeCartItem(userId, cartItem.cartItemId);
         }
         await fetchCartData();
-      } else {
-        console.error("Cart item not found for update");
       }
     } catch (err) {
-      console.error('Error updating cart item:', err);
       Alert.alert('Error', 'Failed to update cart');
     } finally {
       setCartLoading(false);
@@ -109,10 +88,7 @@ export const useCart = (userId) => {
   };
 
   const getItemQuantityInCart = (item) => {
-    console.log("getItemQuantity")
-    const cartItem = cart.find(
-      (i) => i.menuId === item.menuId
-    );
+    const cartItem = cart.find((i) => i.menuId === item.menuId);
     return cartItem ? cartItem.quantity : 0;
   };
 
@@ -126,13 +102,11 @@ export const useCart = (userId) => {
 
   const clearCart = async () => {
     if (!userId) return;
-
     try {
       setCartLoading(true);
       await foodAPI.clearCart(userId);
       setCart([]);
     } catch (err) {
-      console.error('Error clearing cart:', err);
       Alert.alert('Error', 'Failed to clear cart');
     } finally {
       setCartLoading(false);
