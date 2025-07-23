@@ -45,7 +45,7 @@ const OrderCard = ({ order }) => (
     </Text>
 
     <View style={styles.orderFooter}>
-      <Text style={styles.orderTotal}>${order.totalAmount?.toFixed(2) || '0.00'}</Text>
+      <Text style={styles.orderTotal}>₹{order.totalAmount?.toFixed(2) || '0.00'}</Text>
       <View
         style={[
           styles.statusBadge,

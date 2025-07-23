@@ -31,7 +31,7 @@ const AuthStack = () => (
 
 const HomeStack = () => (
   <Stack.Navigator>
-    <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Food Delivery' }} />
+    <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Crave Clock' }} />
     <Stack.Screen
       name="RestaurantDetail"
       component={RestaurantDetailScreen}
