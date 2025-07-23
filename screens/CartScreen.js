@@ -12,7 +12,8 @@ import CartItem from '../components/CartItem';
 import { useCart } from '../hooks/useCart';
 import { foodAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const CartScreen = ({ navigation, route }) => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const CartScreen = ({ navigation, route }) => {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Cart is only available for logged-in users. Please log in first.</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
           <Text style={{ color: 'blue', marginTop: 20 }}>Go to Home</Text>
         </TouchableOpacity>
       </View>
@@ -32,24 +33,20 @@ const CartScreen = ({ navigation, route }) => {
   }
 
   // useCart will fetch the cart for you
-  const { cart, getTotalAmount, clearCart, updateCartItem, incrementItem, decrementItem, cartLoading } = useCart(userId);
+  const { cart, getTotalAmount, clearCart, updateCartItem, incrementItem, decrementItem, cartLoading, fetchCartData } = useCart(userId);
 
-  // Optionally, you can manually fetch and log for debugging:
-  useEffect(() => {
-    if (userId) {
-      foodAPI.getCartByUserId(userId)
-        .then(res => console.log('Cart response:', res.data))
-        .catch(err => console.error('Cart fetch error:', err));
-    }
-  }, [userId]);
+  // Always fetch cart when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartData();
+    }, [fetchCartData])
+  );
 
   const handleCheckout = () => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout');
       return;
     }
-    console.log('CartScreen handleCheckout userId:', userId);
-    console.log('CartScreen handleCheckout cart:', cart);
     navigation.navigate('Checkout', { userId });
   };
 
@@ -74,8 +71,6 @@ const CartScreen = ({ navigation, route }) => {
     />
   );
 
-  console.log('CartScreen cart:', cart);
-
   if (cartLoading) {
     return <Text>Loading...</Text>;
   }
@@ -86,9 +81,7 @@ const CartScreen = ({ navigation, route }) => {
         <Text style={styles.emptyText}>Your cart is empty</Text>
         <TouchableOpacity
           style={globalStyles.button}
-          onPress={() =>  navigation.navigate('Home', {
-                screen: 'Home',
-              })}
+          onPress={() => navigation.navigate('Home')}
         >
           <Text style={globalStyles.buttonText}>Browse Restaurants</Text>
         </TouchableOpacity>

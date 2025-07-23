@@ -2,7 +2,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { foodAPI } from '../services/api';
-import { useFocusEffect } from '@react-navigation/native';
 
 
 export const useCart = (userId) => {

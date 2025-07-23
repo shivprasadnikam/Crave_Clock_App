@@ -13,6 +13,9 @@ import { globalStyles } from '../styles/globalStyles';
 import RestaurantCard from '../components/RestaurantCard';
 import SearchBar from '../components/SearchBar';
 import { foodAPI } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useCart } from '../hooks/useCart';
 // Optional: If you have an auth context
 // import { AuthContext } from '../context/AuthContext';
  

@@ -10,6 +10,7 @@ import {
 import { globalStyles, colors } from '../styles/globalStyles';
 import { foodAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -66,6 +67,7 @@ const OrderHistoryScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
   const userId = user?.id;
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchOrders();

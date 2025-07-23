@@ -21,7 +21,7 @@ const RestaurantCard = ({ restaurant, onPress }) => {
         <View style={styles.info}>
           <Text style={styles.rating}>⭐ {restaurant.rating}</Text>
           <Text style={styles.deliveryTime}>{restaurant.deliveryTime} min</Text>
-          <Text style={styles.deliveryFee}>${restaurant.deliveryFee}</Text>
+          <Text style={styles.deliveryFee}>₹{restaurant.deliveryFee}</Text>
         </View>
       </View>
     </TouchableOpacity>
