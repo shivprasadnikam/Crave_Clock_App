@@ -13,11 +13,15 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../styles/globalStyles';
+import { foodAPI } from '../services/api';
+import { CommonActions } from '@react-navigation/native';
 
 const SignUpScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phoneNumber: '',
+    address: '',
     password: '',
     confirmPassword: '',
   });
@@ -35,34 +39,37 @@ const SignUpScreen = ({ navigation }) => {
   };
 
   const handleSignUp = async () => {
-    const { name, email, password, confirmPassword } = formData;
+    const { name, email, phoneNumber, address, password, confirmPassword } = formData;
 
     // Validation
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter your full name');
       return;
     }
-
     if (!email.trim()) {
       Alert.alert('Error', 'Please enter your email address');
       return;
     }
-
     if (!validateEmail(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
-
+    if (!phoneNumber.trim()) {
+      Alert.alert('Error', 'Please enter your phone number');
+      return;
+    }
+    if (!address.trim()) {
+      Alert.alert('Error', 'Please enter your address');
+      return;
+    }
     if (!password.trim()) {
       Alert.alert('Error', 'Please enter a password');
       return;
     }
-
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters long');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
@@ -71,32 +78,31 @@ const SignUpScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For demo purposes, store user data locally
-      const userData = {
-        name,
+      // Call backend signup API
+      const res = await foodAPI.signupUser({
+        fullName: name,
         email,
-        id: Date.now().toString(),
-      };
-      
-      await AsyncStorage.setItem('userToken', 'demo-token');
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      
+        phoneNumber,
+        address,
+        password,
+      });
       Alert.alert(
         'Success',
         'Account created successfully!',
         [
           {
             text: 'OK',
-            onPress: () => navigation.replace('Main'),
+            onPress: () => navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Main' }],
+              })
+            ),
           },
         ]
       );
-      
     } catch (error) {
-      Alert.alert('Sign Up Failed', 'Something went wrong. Please try again.');
+      Alert.alert('Sign Up Failed', error?.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -194,6 +200,33 @@ const SignUpScreen = ({ navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your phone number"
+              value={formData.phoneNumber}
+              onChangeText={(value) => handleInputChange('phoneNumber', value)}
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your address"
+              value={formData.address}
+              onChangeText={(value) => handleInputChange('address', value)}
+              autoCapitalize="sentences"
+              autoCorrect={false}
+              editable={!isLoading}
+              multiline
+            />
           </View>
 
           <TouchableOpacity

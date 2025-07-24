@@ -11,7 +11,8 @@
     "react-native-screens": "^4.11.1",
     "react-dom": "19.0.0",
     "react-native-web": "^0.20.0",
-    "@expo/metro-runtime": "~5.0.4"
+    "@expo/metro-runtime": "~5.0.4",
+    "expo-notifications": "~0.31.4"
   },
   "devDependencies": {
     "@react-native-community/cli": "^19.1.0"

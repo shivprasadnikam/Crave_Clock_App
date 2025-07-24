@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,63 +19,49 @@ const CheckoutScreen = ({ navigation, route }) => {
   const { cart, getTotalAmount, clearCart } = useCart(userId);
   console.log('CheckoutScreen rendered');
   console.log('CheckoutScreen cart:', cart);
-  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId) return;
+      try {
+        const res = await foodAPI.getUserProfile(userId);
+        if (res.data && res.data.phoneNumber) {
+          setPhoneNumber(res.data.phoneNumber);
+        }
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchProfile();
+  }, [userId]);
+
   const handlePlaceOrder = async () => {
-    if (!deliveryAddress.trim() || !phoneNumber.trim()) {
-      Alert.alert('Missing Information', 'Please fill in all required fields');
+    if (!phoneNumber.trim()) {
+      Alert.alert('Missing Information', 'Please fill in your phone number');
       return;
     }
     if (!cart || cart.length === 0) {
-      console.log("Checkout Screen Cart Size :: ",cart.length)
       Alert.alert('Empty Cart', 'Your cart is empty.');
       return;
     }
-    setLoading(true);
-    try {
-      const orderData = {
-        items: cart,
-        deliveryAddress: deliveryAddress.trim(),
-        phoneNumber: phoneNumber.trim(),
-        specialInstructions: specialInstructions.trim(),
-        totalAmount: getTotalAmount(),
-        orderDate: new Date().toISOString(),
-        userId: userId
-      };
-      console.log('UserId', userId);
-      console.log('Create Order Request ::', orderData);
-      const response = await foodAPI.createOrder(orderData);
-      console.log('✅ Order Placed:', response.data);
-      const orderId = response.data.orderId;
-      Alert.alert(
-        'Order Placed Successfully!',
-        `Your order #${orderId} has been placed. Estimated delivery: 30-45 minutes`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              clearCart();
-              navigation.navigate('OrdersTab', {
-                screen: 'OrderHistory',
-              });
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to place order. Please try again.');
-      console.error('Error placing order:', error);
-    } finally {
-      setLoading(false);
-    }
+    navigation.navigate('PaymentScreen', {
+      amount: total, // Only subtotal + tax
+      orderId: 'order_' + Date.now(),
+      userName: user?.name || '',
+      userId: userId,
+      cart,
+      phoneNumber: phoneNumber.trim(),
+      specialInstructions: specialInstructions.trim(),
+      tax,
+      subtotal: getTotalAmount(),
+    });
   };
 
-  const deliveryFee = 2.99;
   const tax = getTotalAmount() * 0.08;
-  const total = getTotalAmount() + deliveryFee + tax;
+  const total = getTotalAmount() + tax;
 
   if (!cart || cart.length === 0) {
     return <Text>Your cart is empty</Text>;
@@ -87,14 +73,7 @@ const CheckoutScreen = ({ navigation, route }) => {
         <Text style={globalStyles.title}>Checkout</Text>
 
         <View style={styles.section}>
-          <Text style={globalStyles.subtitle}>Delivery Information</Text>
-          <TextInput
-            style={globalStyles.input}
-            placeholder="Delivery Address *"
-            value={deliveryAddress}
-            onChangeText={setDeliveryAddress}
-            multiline
-          />
+          <Text style={globalStyles.subtitle}>Contact Information</Text>
           <TextInput
             style={globalStyles.input}
             placeholder="Phone Number *"
@@ -126,10 +105,6 @@ const CheckoutScreen = ({ navigation, route }) => {
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Subtotal:</Text>
             <Text style={styles.summaryText}>₹{getTotalAmount().toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryText}>Delivery Fee:</Text>
-            <Text style={styles.summaryText}>₹{deliveryFee.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Tax:</Text>

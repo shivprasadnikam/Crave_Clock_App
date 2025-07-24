@@ -124,6 +124,27 @@ export const foodAPI = {
     return api.post(`/api/cart/sync/${userId}`, { items: cartItems });
   },
 
+  // 💳 Payment APIs (Spring Boot backend)
+  initiatePayment: (paymentRequest) => {
+    console.log('[foodAPI] initiatePayment payload:', paymentRequest);
+    return api.post('/api/payment/initiate', paymentRequest);
+  },
+  updatePaymentStatus: (paymentId, status, transactionId) => {
+    console.log('[foodAPI] updatePaymentStatus paymentId:', paymentId, 'status:', status, 'transactionId:', transactionId);
+    return api.post('/api/payment/update-status', null, {
+      params: { paymentId, status, transactionId },
+    });
+  },
+  getPaymentStatus: (paymentId) => {
+    console.log('[foodAPI] getPaymentStatus paymentId:', paymentId);
+    return api.get(`/api/payment/status/${paymentId}`);
+  },
+  // Legacy/simple pay endpoint
+  pay: (paymentRequest) => {
+    console.log('[foodAPI] pay payload:', paymentRequest);
+    return api.post('/api/payment/pay', paymentRequest);
+  },
+
   // 👤 User Profile
   getUserProfile: (userId) => {
     console.log('[foodAPI] getUserProfile userId:', userId);
@@ -133,6 +154,11 @@ export const foodAPI = {
   updateUserProfile: (userId, profileData) => {
     console.log('[foodAPI] updateUserProfile userId:', userId, 'profileData:', profileData);
     return api.put(`/api/profile/${userId}`, profileData);
+  },
+  // 👤 Signup (onBoardUser)
+  signupUser: (userData) => {
+    console.log('[foodAPI] signupUser payload:', userData);
+    return api.post('/api/onBoardUser', userData);
   },
 };
 

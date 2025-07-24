@@ -18,6 +18,8 @@ import CartScreen from '../screens/CartScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import PaymentScreen from '../screens/PaymentScreen';
+import OrderConfirmation from '../screens/OrderConfirmation';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -44,6 +46,8 @@ const CartStack = () => (
   <Stack.Navigator>
     <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'Cart' }} />
     <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Checkout' }} />
+    <Stack.Screen name="PaymentScreen" component={PaymentScreen} options={{ title: 'Payment' }} />
+    <Stack.Screen name="OrderConfirmation" component={OrderConfirmation} options={{ title: 'Order Confirmation' }} />
   </Stack.Navigator>
 );
 

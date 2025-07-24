@@ -120,8 +120,6 @@ const RestaurantDetailScreen = ({ route, navigation }) => {
         <Text style={styles.cuisine}>{restaurant.category}</Text>
         <View style={styles.infoRow}>
           <Text style={styles.rating}>⭐ {restaurant.rating}</Text>
-          <Text style={styles.deliveryTime}>{restaurant.deliveryTime} min</Text>
-          <Text style={styles.deliveryFee}>Delivery: ₹{restaurant.deliveryFee}</Text>
         </View>
       </View>
       
