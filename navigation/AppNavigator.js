@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../styles/globalStyles';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext'; // ✅ Use Auth Context
+import { useAuth } from '../context/AuthContext';
 
 // Auth Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -37,7 +37,7 @@ const HomeStack = () => (
     <Stack.Screen
       name="RestaurantDetail"
       component={RestaurantDetailScreen}
-      options={({ route }) => ({ title: route.params.restaurant.name })}
+      options={({ route }) => ({ title: route.params?.restaurant?.name || 'Restaurant' })}
     />
   </Stack.Navigator>
 );
@@ -113,9 +113,9 @@ const TabNavigator = () => {
 };
 
 const AppNavigator = () => {
-  const { isLoggedIn, isLoading } = useAuth(); // ✅ Use global auth state
+  const { isLoggedIn, isLoading } = useAuth();
 
-  if (isLoading) return null; // or SplashScreen
+  if (isLoading) return null;
 
   return (
     <NavigationContainer>

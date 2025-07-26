@@ -1,37 +1,33 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import { foodAPI } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
   const [expoPushToken, setExpoPushToken] = useState(null);
   const [notification, setNotification] = useState(null);
-  const notificationListener = useRef();
-  const responseListener = useRef();
+  const { user } = useAuth();
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
+      console.log('[NotificationContext] Expo push token:', token);
       setExpoPushToken(token);
-      // You can send this token to your backend here if needed
+      if (user?.id && token) {
+        console.log('[NotificationContext] Sending push token to backend for user:', user.id);
+        foodAPI.savePushToken(user.id, token)
+          .then(() => console.log('[NotificationContext] Push token saved to backend'))
+          .catch(err => console.error('[NotificationContext] Error saving push token:', err));
+      }
     });
-
-    // Listener for foreground notifications
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('[NotificationContext] Notification received:', notification);
       setNotification(notification);
     });
-
-    // Listener for user interaction with notifications
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      // Handle notification response (e.g., navigation)
-    });
-
-    return () => {
-      if (notificationListener.current) Notifications.removeNotificationSubscription(notificationListener.current);
-      if (responseListener.current) Notifications.removeNotificationSubscription(responseListener.current);
-    };
-  }, []);
+    return () => subscription.remove();
+  }, [user?.id]);
 
   return (
     <NotificationContext.Provider value={{ expoPushToken, notification }}>
@@ -42,7 +38,7 @@ export const NotificationProvider = ({ children }) => {
 
 export const useNotification = () => useContext(NotificationContext);
 
-export async function registerForPushNotificationsAsync() {
+async function registerForPushNotificationsAsync() {
   let token;
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -56,19 +52,8 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
     token = (await Notifications.getExpoPushTokenAsync()).data;
-    return token;
   } else {
     alert('Must use physical device for Push Notifications');
   }
-
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
   return token;
 }

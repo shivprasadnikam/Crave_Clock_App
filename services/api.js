@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect } from 'react';
 
-const BASE_URL = 'http://192.168.1.3:8082';
+const BASE_URL = 'https://crave-clock-portal.onrender.com';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -159,6 +159,11 @@ export const foodAPI = {
   signupUser: (userData) => {
     console.log('[foodAPI] signupUser payload:', userData);
     return api.post('/api/onBoardUser', userData);
+  },
+  // Save Expo push token for user
+  savePushToken: (userId, token) => {
+    console.log('[foodAPI] savePushToken userId:', userId, 'token:', token);
+    return api.post(`/api/profile/${userId}/push-token`, { token });
   },
 };
 

@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Crave Clock",
+    "slug": "crave_clock_client",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.craveclock.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3f8f3fdd-cca3-4be7-a062-ff9f65236573"
+      }
+    }
+  }
+}

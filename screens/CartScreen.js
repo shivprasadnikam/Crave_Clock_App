@@ -81,7 +81,7 @@ const CartScreen = ({ navigation, route }) => {
         <Text style={styles.emptyText}>Your cart is empty</Text>
         <TouchableOpacity
           style={globalStyles.button}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('HomeTab')}
         >
           <Text style={globalStyles.buttonText}>Browse Restaurants</Text>
         </TouchableOpacity>
